@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ma Bibliothèque Média</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141418;
+      --card: #1a1a22;
+      --border: #2a2a38;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --cream: #f5f0e8;
+      --muted: #8a8a9a;
+      --tag-book: #2d4a3e;
+      --tag-book-text: #7ecfb0;
+      --tag-film: #3a2040;
+      --tag-film-text: #c98de8;
+      --tag-series: #1e3050;
+      --tag-series-text: #7ab8f5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: relative;
+      padding: 80px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 50%; transform: translateX(-50%);
+      width: 200px; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .header-eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.1s;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      background: linear-gradient(135deg, var(--cream) 40%, var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards 0.2s;
+    }
+
+    header p.subtitle {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 300;
+      max-width: 460px;
+      margin-inline: auto;
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards 0.35s;
+    }
+
+    /* ─── FILTERS ─── */
+    .filters-bar {
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.5s;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 20px;
+      border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.04em;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,0.07);
+    }
+
+    /* ─── SEARCH ─── */
+    .search-wrap {
+      position: relative;
+      max-width: 340px;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      padding: 9px 16px 9px 40px;
+      border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      transition: border-color 0.25s;
+      outline: none;
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--gold); }
+
+    /* ─── STATS ─── */
+    .stats-row {
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.6s;
+    }
+
+    .stat-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 24px;
+      text-align: center;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .stat-pill:hover { border-color: var(--gold); transform: translateY(-2px); }
+
+    .stat-pill .num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      color: var(--gold-light);
+      line-height: 1;
+    }
+
+    .stat-pill .lbl {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ─── SECTION TITLE ─── */
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-style: italic;
+      color: var(--cream);
+      position: relative;
+      padding-left: 18px;
+    }
+
+    .section-title::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%; transform: translateY(-50%);
+      width: 4px; height: 70%;
+      background: var(--gold);
+      border-radius: 4px;
+    }
+
+    /* ─── CARD ─── */
+    .media-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      height: 100%;
+      display: flex; flex-direction: column;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
+    }
+
+    .media-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(201,168,76,0.4);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.1);
+    }
+
+    .card-cover {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .card-cover img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+      filter: brightness(0.85);
+    }
+
+    .media-card:hover .card-cover img { transform: scale(1.06); }
+
+    .card-cover-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, var(--card) 0%, transparent 60%);
+    }
+
+    .card-rating {
+      position: absolute;
+      top: 12px; right: 12px;
+      background: rgba(13,13,15,0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.88rem;
+      color: var(--gold-light);
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .card-body-inner {
+      padding: 18px;
+      flex: 1;
+      display: flex; flex-direction: column;
+    }
+
+    .card-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      width: fit-content;
+    }
+
+    .tag-book  { background: var(--tag-book);  color: var(--tag-book-text); }
+    .tag-film  { background: var(--tag-film);  color: var(--tag-film-text); }
+    .tag-series{ background: var(--tag-series);color: var(--tag-series-text);}
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .card-creator {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .card-desc {
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .card-footer-inner {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .card-status {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .status-done   { color: var(--tag-book-text); }
+    .status-ongoing{ color: var(--tag-series-text); }
+    .status-todo   { color: var(--gold); }
+
+    .share-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    .share-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ─── ADD MODAL BUTTON ─── */
+    .fab {
+      position: fixed;
+      bottom: 36px; right: 36px;
+      width: 58px; height: 58px;
+      background: var(--gold);
+      border: none;
+      border-radius: 50%;
+      color: var(--bg);
+      font-size: 1.6rem;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(201,168,76,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+
+    .fab:hover { transform: scale(1.08); box-shadow: 0 12px 40px rgba(201,168,76,0.5); }
+
+    /* ─── MODAL ─── */
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--cream);
+    }
+
+    .modal-header {
+      border-bottom: 1px solid var(--border);
+      padding: 24px 28px 20px;
+    }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+    }
+
+    .btn-close { filter: invert(1) opacity(0.5); }
+
+    .modal-body { padding: 24px 28px; }
+    .modal-footer { border-top: 1px solid var(--border); padding: 16px 28px; }
+
+    .form-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .form-control, .form-select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+    }
+
+    .form-control:focus, .form-select:focus {
+      background: var(--card);
+      border-color: var(--gold);
+      color: var(--cream);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+
+    .form-select option { background: var(--surface); }
+
+    .btn-gold {
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      padding: 10px 28px;
+      border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+    .btn-outline-gold {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-outline-gold:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      display: none;
+    }
+
+    .empty-state svg { opacity: 0.2; margin-bottom: 20px; }
+    .empty-state p { color: var(--muted); font-size: 1rem; }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+    /* ─── DESIGN EXTENSION FOR THE FOOTER FOUNDERS ─── */
+    .footer-founder-badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(201, 168, 76, 0.05);
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      color: var(--gold-light);
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      margin: 4px;
+      transition: all 0.2s ease;
+    }
+    .footer-founder-badge:hover {
+      background: rgba(201, 168, 76, 0.12);
+      border-color: var(--gold);
+      transform: translateY(-1px);
+    }
+    footer {
+      padding: 60px 0 30px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-eyebrow">Votre espace culturel partagé</div>
+    <h1>Ma Bibliothèque<br/><em>Média</em></h1>
+    <p class="subtitle">Partagez vos livres, films et séries préférés avec vos amis et votre famille.</p>
+  </div>
+</header>
+
+<div class="filters-bar">
+  <div class="container">
+    <div class="row align-items-center gy-3">
+      <div class="col-lg-7">
+        <div class="d-flex flex-wrap gap-2">
+          <button class="filter-btn active" data-filter="all">Tout</button>
+          <button class="filter-btn" data-filter="book">📚 Livres</button>
+          <button class="filter-btn" data-filter="film">🎬 Films</button>
+          <button class="filter-btn" data-filter="series">📺 Séries</button>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="search-wrap ms-lg-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-input" id="searchInput" type="text" placeholder="Rechercher un titre…"/>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container my-5 stats-row">
+  <div class="row g-3 justify-content-center">
+    <div class="col-6 col-md-3">
+      <div class="stat-pill">
+        <div class="num" id="statTotal">0</div>
+        <div class="lbl">Œuvres</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-pill">
+        <div class="num" id="statBooks">0</div>
+        <div class="lbl">Livres</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-pill">
+        <div class="num" id="statFilms">0</div>
+        <div class="lbl">Films</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-pill">
+        <div class="num" id="statSeries">0</div>
+        <div class="lbl">Séries</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="container pb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="section-title">Liste des œuvres</h2>
+    <span class="text-muted" style="font-size:0.8rem;" id="countLabel"></span>
+  </div>
+
+  <div class="row g-4" id="mediaGrid"></div>
+
+  <div class="empty-state" id="emptyState">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+    <p>Aucune œuvre trouvée. Ajoutez-en une !</p>
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="row gy-4 align-items-center">
+      <div class="col-md-5 text-center text-md-start">
+        <p class="mb-1" style="font-size: 0.85rem; letter-spacing: 0.05em;">
+          Fait avec <span style="color: #e24c4c;">♥</span> pour partager la culture.
+        </p>
+        <p class="small opacity-50 mb-0">Technologies utilisées : HTML · CSS · Bootstrap 5</p>
+      </div>
+      <div class="col-md-7 text-center text-md-end">
+        <div class="small opacity-50 mb-2 text-uppercase tracking-wider" style="font-size: 0.68rem; letter-spacing: 0.15em;">Fondateurs</div>
+        <div class="d-flex flex-wrap justify-content-center justify-content-md-end">
+          <span class="footer-founder-badge">POATY MOISE</span>
+          <span class="footer-founder-badge">SIKA KIASLINE</span>
+          <span class="footer-founder-badge">SAMBA ROLVY</span>
+          <span class="footer-founder-badge">SAMBA JAPHET</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<button class="fab" data-bs-toggle="modal" data-bs-target="#addModal" title="Ajouter une œuvre">+</button>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ajouter une œuvre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Titre *</label>
+          <input type="text" class="form-control" id="inputTitle" placeholder="Ex: Dune, Inception…"/>
+        </div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label">Type *</label>
+            <select class="form-select" id="inputType">
+              <option value="book">📚 Livre</option>
+              <option value="film">🎬 Film</option>
+              <option value="series">📺 Série</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Note (1–5) ★</label>
+            <select class="form-select" id="inputRating">
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">Auteur / Réalisateur</label>
+          <input type="text" class="form-control" id="inputCreator" placeholder="Nom de l'auteur ou réalisateur"/>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">Description courte</label>
+          <textarea class="form-control" id="inputDesc" rows="2" placeholder="Un résumé en quelques mots…"></textarea>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">Statut</label>
+          <select class="form-select" id="inputStatus">
+            <option value="done">✅ Terminé</option>
+            <option value="ongoing">🔄 En cours</option>
+            <option value="todo">📌 À faire</option>
+          </select>
+        </div>
+        <div class="mt-3">
+          <label class="form-label">URL de couverture (optionnel)</label>
+          <input type="text" class="form-control" id="inputCover" placeholder="https://…"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-gold" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn-gold" id="btnSave">Ajouter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ── Default covers by type ──
+  const defaultCovers = {
+    book:   'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80',
+    film:   'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&q=80',
+    series: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=600&q=80',
+  };
+
+  const typeLabels  = { book: '📚 Livre', film: '🎬 Film', series: '📺 Série' };
+  const statusMeta  = {
+    done:   { label: '✅ Terminé',   cls: 'status-done'    },
+    ongoing:{ label: '🔄 En cours',  cls: 'status-ongoing' },
+    todo:   { label: '📌 À voir',    cls: 'status-todo'    },
+  };
+
+  // ── Seed data ──
+  let mediaList = [
+    { id: 1, title: 'Dune', type: 'book', creator: 'Frank Herbert', desc: 'Une épopée de science-fiction dans un univers galactique fascinant.', rating: 5, status: 'done',   cover: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80' },
+    { id: 2, title: 'Inception', type: 'film', creator: 'Christopher Nolan', desc: 'Un thriller onirique où la réalité se superpose aux rêves.', rating: 5, status: 'done',   cover: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&q=80' },
+    { id: 3, title: 'Breaking Bad', type: 'series', creator: 'Vince Gilligan', desc: 'La descente aux enfers d\'un professeur de chimie devenu dealer.', rating: 5, status: 'done',   cover: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=600&q=80' },
+    { id: 4, title: 'Le Seigneur des Anneaux', type: 'book', creator: 'J.R.R. Tolkien', desc: 'L\'œuvre fondatrice de la fantasy moderne.', rating: 5, status: 'done',   cover: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80' },
+    { id: 5, title: 'Interstellar', type: 'film', creator: 'Christopher Nolan', desc: 'Un voyage à travers l\'espace-temps pour sauver l\'humanité.', rating: 4, status: 'done',   cover: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&q=80' },
+    { id: 6, title: 'Stranger Things', type: 'series', creator: 'Duffer Brothers', desc: 'Des enfants affrontent des forces surnaturelles dans les années 80.', rating: 4, status: 'ongoing', cover: 'https://images.unsplash.com/photo-1551972873-b7e8754e8e26?w=600&q=80' },
+  ];
+
+  let nextId = 7;
+  let activeFilter = 'all';
+  let searchQuery  = '';
+
+  // ── Render ──
+  function starsHtml(n) {
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+
+  function render() {
+    const grid = document.getElementById('mediaGrid');
+    const empty = document.getElementById('emptyState');
+
+    const filtered = mediaList.filter(m => {
+      const matchType = activeFilter === 'all' || m.type === activeFilter;
+      const matchQ    = m.title.toLowerCase().includes(searchQuery) ||
+                        (m.creator||'').toLowerCase().includes(searchQuery);
+      return matchType && matchQ;
+    });
+
+    document.getElementById('countLabel').textContent =
+      filtered.length + ' œuvre' + (filtered.length !== 1 ? 's' : '');
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      grid.innerHTML = filtered.map((m, i) => `
+        <div class="col-12 col-sm-6 col-lg-4" data-id="${m.id}">
+          <div class="media-card" style="animation-delay:${i * 0.07}s">
+            <div class="card-cover">
+              <img src="${m.cover || defaultCovers[m.type]}" alt="${m.title}"
+                   onerror="this.src='${defaultCovers[m.type]}'"/>
+              <div class="card-cover-overlay"></div>
+              <div class="card-rating">${starsHtml(m.rating)}</div>
+            </div>
+            <div class="card-body-inner">
+              <span class="card-tag tag-${m.type}">${typeLabels[m.type]}</span>
+              <div class="card-title">${m.title}</div>
+              ${m.creator ? `<div class="card-creator">par ${m.creator}</div>` : ''}
+              <div class="card-desc">${m.desc || ''}</div>
+            </div>
+            <div class="card-footer-inner">
+              <span class="card-status ${statusMeta[m.status].cls}">${statusMeta[m.status].label}</span>
+              <button class="share-btn" onclick="shareItem(${m.id})">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Partager
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    updateStats();
+  }
+
+  function updateStats() {
+    document.getElementById('statTotal').textContent  = mediaList.length;
+    document.getElementById('statBooks').textContent  = mediaList.filter(m => m.type === 'book').length;
+    document.getElementById('statFilms').textContent  = mediaList.filter(m => m.type === 'film').length;
+    document.getElementById('statSeries').textContent = mediaList.filter(m => m.type === 'series').length;
+  }
+
+  // ── Filters ──
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      render();
+    });
+  });
+
+  // ── Search ──
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.toLowerCase();
+    render();
+  });
+
+  // ── Add ──
+  document.getElementById('btnSave').addEventListener('click', () => {
+    const title = document.getElementById('inputTitle').value.trim();
+    if (!title) { document.getElementById('inputTitle').focus(); return; }
+
+    mediaList.unshift({
+      id:      nextId++,
+      title,
+      type:    document.getElementById('inputType').value,
+      creator: document.getElementById('inputCreator').value.trim(),
+      desc:    document.getElementById('inputDesc').value.trim(),
+      rating:  parseInt(document.getElementById('inputRating').value),
+      status:  document.getElementById('inputStatus').value,
+      cover:   document.getElementById('inputCover').value.trim(),
+    });
+
+    ['inputTitle','inputCreator','inputDesc','inputCover'].forEach(id =>
+      document.getElementById(id).value = '');
+
+    bootstrap.Modal.getInstance(document.getElementById('addModal')).hide();
+    render();
+  });
+
+  // ── Share ──
+  function shareItem(id) {
+    const m = mediaList.find(x => x.id === id);
+    if (!m) return;
+    const text = `Je recommande "${m.title}"${m.creator ? ' de ' + m.creator : ''} — ${starsHtml(m.rating)}`;
+    if (navigator.share) {
+      navigator.share({ title: m.title, text });
+    } else {
+      navigator.clipboard.writeText(text).then(() => alert('Copié dans le presse-papier !\n\n' + text));
+    }
+  }
+
+  // ── Init ──
+  render();
+</script>
+</body>
+</html>
